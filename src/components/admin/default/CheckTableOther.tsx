@@ -52,7 +52,7 @@ function CheckTableOther() {
 
   useEffect(() => {
     // Appel de l'API pour récupérer les drivers
-    fetch("http://appgobabi.com/api/drivers-by-id-code")
+    fetch("https://appgobabi.com/api/drivers-by-id-code")
       .then((response) => response.json())
       .then((data) => {
         setDrivers(data.drivers_with_null_id_code.drivers); // Mise à jour des données des drivers

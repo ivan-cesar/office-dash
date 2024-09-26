@@ -45,7 +45,7 @@ function CheckTable() {
 
   useEffect(() => {
     // Appel de l'API pour récupérer les chauffeurs
-    fetch("http://appgobabi.com/api/drivers-by-id-code")
+    fetch("https://appgobabi.com/api/drivers-by-id-code")
       .then((response) => response.json())
       .then((data) => {
         setChauffeurs(data.drivers_with_non_null_id_code.drivers); // Mise à jour des données des chauffeurs

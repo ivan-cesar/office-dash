@@ -1,76 +1,144 @@
-import React, { useEffect, useRef, useState } from "react";
-import Card from "components/card";
-import mapboxgl from "mapbox-gl";
+import React, { useEffect, useState } from 'react';
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader, DirectionsRenderer } from '@react-google-maps/api';
+import axios from 'axios';
 
-// Clé d'API Mapbox
-mapboxgl.accessToken = 'pk.eyJ1IjoiYmVhdWNvZGUiLCJhIjoiY20wbW5pZ3B5MDVnZDJrc2pyMHUzZjU4biJ9.yPHypDgZ3JjFhARt2KWhUQ';
+interface Vehicle {
+  id: number;
+  location: google.maps.LatLngLiteral;
+  destination: google.maps.LatLngLiteral;
+  driver: {
+    first_name: string;
+    contact_number: string;
+  };
+  course: {
+    end_address: string;
+    montant: number;
+  };
+}
+
+const mapContainerStyle = { width: '100%', height: '500px' };
+const centerLocation = { lat: 5.3907, lng: -4.0061 }; // Centrer sur Abidjan
 
 function MapCard() {
-  const mapContainerRef = useRef(null);
-  const [inProgressRides, setInProgressRides] = useState([]);
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: 'AIzaSyClyDkHgDruEoaAPdnKjaQCY7LJog0_2Ss', // Remplace par ta clé API
+    libraries: ['places'],
+  });
 
-  // Appeler l'API pour obtenir les courses en cours
-  const fetchInProgressRides = async () => {
-    try {
-      const response = await fetch('http://appgobabi.com/api/count-in-progress-ride');
-      const data = await response.json();
-      console.log("Rides in progress:", data.in_progress_rides); // Log pour vérifier les données
-      setInProgressRides(data.in_progress_rides);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des courses en cours:", error);
-    }
-  };
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [directions, setDirections] = useState<any>({});
+  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null); // Pour gérer l'info-bulle
 
   useEffect(() => {
-    fetchInProgressRides(); // Appel initial pour récupérer les données
-  }, []);
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('https://appgobabi.com/api/rides/in-progress-today');
+        const rides = response.data.in_progress_rides_today;
+        const updatedVehicles: Vehicle[] = rides.map((ride: any, index: number) => ({
+          id: index + 1,
+          location: {
+            lat: parseFloat(ride.driver.latitude),
+            lng: parseFloat(ride.driver.longitude),
+          },
+          destination: {
+            lat: parseFloat(ride.course_encours.end_latitude),
+            lng: parseFloat(ride.course_encours.end_longitude),
+          },
+          driver: {
+            first_name: ride.driver.first_name,
+            contact_number: ride.driver.contact_number,
+          },
+          course: {
+            end_address: ride.course_encours.end_address,
+            montant: ride.course_encours.montant,
+          },
+        }));
 
-  useEffect(() => {
-    // Initialisation de la carte
-    const map = new mapboxgl.Map({
-      container: mapContainerRef.current!,
-      style: "mapbox://styles/mapbox/streets-v11", // Style de la carte
-      center: [-4.008256, 5.336414], // Coordonnées initiales [longitude, latitude]
-      zoom: 10, // Zoom initial
-    });
+        setVehicles(updatedVehicles);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
 
-    // Ajout de contrôles de zoom et de rotation
-    map.addControl(new mapboxgl.NavigationControl(), "top-right");
+    fetchData();
 
-    // Ajouter des marqueurs pour chaque course en cours
-    if (inProgressRides.length > 0) {
-      inProgressRides.forEach((ride) => {
-        const longitude = parseFloat(ride.start_longitude);
-        const latitude = parseFloat(ride.start_latitude);
-
-        if (!isNaN(longitude) && !isNaN(latitude)) {
-          new mapboxgl.Marker()
-            .setLngLat([longitude, latitude])
-            .setPopup(
-              new mapboxgl.Popup({ offset: 25 })
-                .setHTML(`<h3>${ride.driver.display_name}</h3><p>Départ: ${ride.start_address}</p>`)
-            )
-            .addTo(map);
-        } else {
-          console.error("Invalid coordinates for ride", ride.id);
-        }
-      });
-    }
+    const id = setInterval(fetchData, 1200000);
+    setIntervalId(id);
 
     return () => {
-      // Nettoyage lors de la désactivation du composant
-      map.remove();
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [inProgressRides]); // Re-render si les courses changent
+  }, [intervalId]);
 
-  return (
-    <Card extra={"w-full h-full sm:overflow-auto px-6"}>
-      {/* Conteneur pour la carte Mapbox */}
-      <div
-        ref={mapContainerRef}
-        style={{ height: "500px", width: "100%", marginTop: "20px", marginBottom: "20px" }}
-      />
-    </Card>
+  useEffect(() => {
+    if (isLoaded && vehicles.length > 0) {
+      vehicles.forEach((vehicle) => {
+        const directionsService = new google.maps.DirectionsService();
+        directionsService.route(
+          {
+            origin: vehicle.location,
+            destination: vehicle.destination,
+            travelMode: google.maps.TravelMode.DRIVING,
+          },
+          (result, status) => {
+            if (status === google.maps.DirectionsStatus.OK) {
+              setDirections((prevDirections) => ({
+                ...prevDirections,
+                [vehicle.id]: result,
+              }));
+            }
+          }
+        );
+      });
+    }
+  }, [isLoaded, vehicles]);
+
+  return isLoaded ? (
+    <GoogleMap
+      mapContainerStyle={mapContainerStyle}
+      zoom={14}
+      center={centerLocation}
+    >
+      {vehicles.map((vehicle) => (
+        <React.Fragment key={vehicle.id}>
+          {/* Marqueur du véhicule en violet */}
+          <Marker
+            position={vehicle.location}
+            icon="http://maps.google.com/mapfiles/ms/icons/purple-dot.png"
+            onClick={() => setSelectedVehicle(vehicle)} // Ouvrir info-bulle
+          />
+
+          {/* Marqueur de la destination en rouge */}
+          <Marker
+            position={vehicle.destination}
+            label={`Dest ${vehicle.id}`}
+            icon="http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+          />
+
+          {directions[vehicle.id] && (
+            <DirectionsRenderer directions={directions[vehicle.id]} />
+          )}
+        </React.Fragment>
+      ))}
+
+      {selectedVehicle && (
+        <InfoWindow
+          position={selectedVehicle.location}
+          onCloseClick={() => setSelectedVehicle(null)} // Fermer info-bulle
+        >
+          <div>
+            <h2>Chauffeur: {selectedVehicle.driver.first_name}</h2>
+            <p>Contact: {selectedVehicle.driver.contact_number}</p>
+            <h3>Course</h3>
+            <p>Destination: {selectedVehicle.course.end_address}</p>
+            <p>Montant: {selectedVehicle.course.montant} FCFA</p>
+          </div>
+        </InfoWindow>
+      )}
+    </GoogleMap>
+  ) : (
+    <div>Loading...</div>
   );
 }
 

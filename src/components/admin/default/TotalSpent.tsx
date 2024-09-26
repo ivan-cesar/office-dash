@@ -29,6 +29,11 @@ const TotalSpent = () => {
   const [completedRide, setCompletedRide] = useState<number>(0);
   const [totalRides, setTotalRides] = useState<number>(0);
   const [canceledRide, setCanceledRides] = useState<number>(0);
+  const [canceledToday, setCanceledToday] = useState<number>(0);
+  const [reservationToday, setReservationToday] = useState<number>(0);
+  const [reservationRide, setReservationRide] = useState<number>(0);
+
+
 
 
 
@@ -46,11 +51,15 @@ const TotalSpent = () => {
     const fetchData = async () => {
       try {
       
-        const riderInProgressResponse = await fetch("http://appgobabi.com/api/count-in-progress-ride");
-        const newRideRequestResponse = await fetch("http://appgobabi.com/api/rides/new-ride-requested-today");
-        const completedRideResponse = await fetch("http://appgobabi.com/api/rides/completed-today");
-        const totalRidesResponse = await fetch("http://appgobabi.com/api/count-rides");
-        const canceledRidesResponse = await fetch("http://appgobabi.com/api/count-canceled-ride");
+        const riderInProgressResponse = await fetch("https://appgobabi.com/api/count-in-progress-ride");
+        const newRideRequestResponse = await fetch("https://appgobabi.com/api/rides/new-ride-requested-today");
+        const completedRideResponse = await fetch("https://appgobabi.com/api/rides/completed-today");
+        const totalRidesResponse = await fetch("https://appgobabi.com/api/count-rides");
+        const canceledRidesResponse = await fetch("https://appgobabi.com/api/count-canceled-ride");
+        const canceledToDayResponse = await fetch("https://appgobabi.com/api/rides/canceled-today");
+        const resevationRideResponse = await fetch("https://appgobabi.com/api/reservations/total");
+        const resevationToDayResponse = await fetch("https://appgobabi.com/api/reservations/today");
+
 
 
         const riderInProgressData = await riderInProgressResponse.json();
@@ -58,6 +67,10 @@ const TotalSpent = () => {
         const completedRideData = await completedRideResponse.json();
         const totalRidesData = await totalRidesResponse.json();
         const canceledRideData = await canceledRidesResponse.json();
+        const canceledToDayData = await canceledToDayResponse.json();
+        const resevationRideData = await resevationRideResponse.json();
+        const resevationToDayData = await resevationToDayResponse.json();
+
          
 
         setRiderInProgress(riderInProgressData.in_progress_rides_count)
@@ -65,6 +78,9 @@ const TotalSpent = () => {
         setCompletedRide(completedRideData.completed_rides_today_count)
         setTotalRides(totalRidesData.total_rides)
         setCanceledRides(canceledRideData.canceled_rides_count)
+        setCanceledToday(canceledToDayData.canceled_rides_today_count)
+        setReservationToday(resevationToDayData.today_reservations)
+        setReservationRide(resevationRideData.total_reservations)
       } catch (error) {
         console.error("Erreur lors du chargement des données : ", error);
       }
@@ -103,22 +119,36 @@ const TotalSpent = () => {
       />
     <OtherWidget
       icon={<IoDocuments className="h-6 w-6" />}
-      title={'Demande De Course'}
+      title={'Nouvelle Demande De Course'}
       subtitle={`${newRideRequest}`}
       color={'text-[#22c55e]'}
 
     />
+     <OtherWidget
+      icon={<IoMdHome className="h-6 w-6" />}
+      title={"Course Effectué Aujourd'hui"}
+      subtitle={`${completedRide}`}
+      color={'text-[#22c55e]'}
+
+    />
+     <OtherWidget
+      icon={<BsCartXFill className="h-7 w-7" />}
+      title={"Course Annuler Aujourd'ui"}
+      subtitle={`${canceledToday}`}
+      color={'text-[#b91c1c]'}
+
+    />
     <OtherWidget
       icon={<MdBarChart className="h-7 w-7" />}
-      title={'Personnes Qui Commandes'}
-      subtitle={'$574.34'}
+      title={"Réservation du jour"}
+      subtitle={`${reservationToday}`}
       color={'text-[#22c55e]'}
 
     />
     <OtherWidget
       icon={<MdDashboard className="h-6 w-6" />}
-      title={'Conducteur Avec New App'}
-      subtitle={'$1,000'}
+      title={"Totale résevartion"}
+      subtitle={`${reservationRide}`}
       color={'text-[#22c55e]'}
 
     />
@@ -136,20 +166,13 @@ const TotalSpent = () => {
       color={'text-[#22c55e]'}
 
     />
-    <OtherWidget
+    {/* <OtherWidget
       icon={<IoMdHome className="h-6 w-6" />}
       title={"Chauffeur ayant Reçu Une Course"}
       subtitle={'$2433'}
       color={'text-[#22c55e]'}
 
-    />
-     <OtherWidget
-      icon={<IoMdHome className="h-6 w-6" />}
-      title={'Course Effectué'}
-      subtitle={`${completedRide}`}
-      color={'text-[#22c55e]'}
-
-    />
+    /> */}
   </div>
   );
 };

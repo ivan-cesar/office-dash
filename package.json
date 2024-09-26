@@ -11,6 +11,7 @@
     "@chakra-ui/tooltip": "^2.2.6",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
+    "@react-google-maps/api": "^2.19.3",
     "@tanstack/react-table": "^8.7.9",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.3.0",
@@ -20,6 +21,7 @@
     "@types/react": "^18.0.15",
     "@types/react-dom": "^18.0.6",
     "apexcharts": "3.35.5",
+    "axios": "^1.7.7",
     "framer-motion": "^7.10.2",
     "mapbox-gl": "^3.6.0",
     "next": "^14.0.2",
@@ -40,7 +42,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.js",
     "export": "next export",
     "lint": "next lint"
   },
