@@ -117,12 +117,14 @@ const Dashboard = () => {
             color={'text-brand-500'}
           />
         </Link>
-        <Widget
-          icon={<MdTaxiAlert className="h-7 w-7" />}
-          title={'Conducteur Hors Ligne'}
-          subtitle={`${offlineDriversCount}`}
-          color={'text-[#b91c1c]'}
-        />
+        <Link href={'admin/driver-online'}>
+          <Widget
+            icon={<MdTaxiAlert className="h-7 w-7" />}
+            title={'Conducteur Hors Ligne'}
+            subtitle={`${offlineDriversCount}`}
+            color={'text-[#b91c1c]'}
+          />
+        </Link>
         <Widget
           icon={<FaCarBurst className="h-6 w-6" />}
           title={'Conducteur Effectuant une course'}
@@ -135,12 +137,14 @@ const Dashboard = () => {
           subtitle={`${totalDrivers - oldVersion}`}
           color={'text-[#22c55e]'}
         />
-        <Widget
-          icon={<MdPhonelinkErase className="h-7 w-7" />}
-          title={'Conducteur Avec Ancienne App'}
-          subtitle={`${oldVersion}`}
-          color={'text-[#b91c1c]'}
-        />
+        <Link href={"/admin/old-version"}>
+          <Widget
+            icon={<MdPhonelinkErase className="h-7 w-7" />}
+            title={'Conducteur Avec Ancienne App'}
+            subtitle={`${oldVersion}`}
+            color={'text-[#b91c1c]'}
+          />
+        </Link>
         <Widget
           icon={<FaGoogle className="h-6 w-6" />}
           title={"Conducteur Go'Babi"}

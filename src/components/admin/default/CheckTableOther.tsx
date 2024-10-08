@@ -9,11 +9,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { TailSpin } from "react-loader-spinner"; // Import du spinner
+import axios from "axios"; // Assurez-vous d'importer axios
 
 type Driver = {
+  id: number;
   first_name: string;
   last_name: string;
   contact_number: string;
+  status: string; // Le statut est directement récupéré de l'API
 };
 
 function CheckTableOther() {
@@ -35,33 +38,69 @@ function CheckTableOther() {
         </p>
       ),
     }),
-    columnHelper.accessor("contact_number", {
-      id: "contact_number",
+    // columnHelper.accessor("contact_number", {
+    //   id: "contact_number",
+    //   header: () => (
+    //     <p className="text-sm font-bold text-gray-600 dark:text-white">
+    //       TÉLÉPHONE
+    //     </p>
+    //   ),
+    //   cell: (info) => (
+    //     <p className="text-sm font-bold text-navy-700 dark:text-white">
+    //       {info.getValue()}
+    //     </p>
+    //   ),
+    // }),
+    columnHelper.accessor("status", {
+      id: "status",
       header: () => (
         <p className="text-sm font-bold text-gray-600 dark:text-white">
-          TÉLÉPHONE
+          STATUT
         </p>
       ),
       cell: (info) => (
-        <p className="text-sm font-bold text-navy-700 dark:text-white">
-          {info.getValue()}
-        </p>
+        <div className="flex items-center">
+          <span
+            className={`w-3 h-3 rounded-full ${
+              info.getValue() === "en ligne" ? "bg-green-500" : "bg-red-500"
+            }`}
+          ></span>
+          <p className="ml-2 text-sm font-bold text-navy-700 dark:text-white">
+            {info.getValue()}
+          </p>
+        </div>
       ),
     }),
   ];
 
-  useEffect(() => {
-    // Appel de l'API pour récupérer les drivers
-    fetch("https://appgobabi.com/api/drivers-by-id-code")
-      .then((response) => response.json())
-      .then((data) => {
-        setDrivers(data.drivers_with_null_id_code.drivers); // Mise à jour des données des drivers
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError("Erreur lors de la récupération des données");
-        setLoading(false);
+  // Fonction pour récupérer les chauffeurs
+  const fetchDrivers = async () => {
+    try {
+      const response = await axios.get("https://appgobabi.com/api/drivers-by-id-code", {
+        timeout: 10000, // Timeout de 10 secondes
       });
+
+      // Utiliser le champ status directement depuis la réponse
+      const driversWithStatus = response.data.drivers_with_null_id_code.drivers.map((driver: Driver) => ({
+        ...driver,
+        status: driver.status, // Utilisez directement le champ status
+      }));
+
+      setDrivers(driversWithStatus);
+      setLoading(false);
+    } catch (err) {
+      // Améliorez le message d'erreur
+      if (axios.isAxiosError(err)) {
+        setError(`Erreur lors de la récupération des données : ${err.message}`);
+      } else {
+        setError(`Erreur inconnue : ${err}`);
+      }
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDrivers(); // Appel initial pour récupérer les chauffeurs
   }, []);
 
   const table = useReactTable({
@@ -98,7 +137,7 @@ function CheckTableOther() {
     <Card extra={"w-full h-full sm:overflow-auto px-6"}>
       <header className="relative flex items-center justify-between pt-4">
         <div className="text-xl text-center font-bold text-navy-700 dark:text-white">
-          Autres Chauffeurs
+          Chauffeurs Go'Babi
         </div>
       </header>
       <div className="mt-8 overflow-x-scroll xl:overflow-x-hidden">
@@ -126,7 +165,7 @@ function CheckTableOther() {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="min-w-[150px] border-white/0 py-3  pr-4"
+                    className="min-w-[150px] border-white/0 py-3 pr-4"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>

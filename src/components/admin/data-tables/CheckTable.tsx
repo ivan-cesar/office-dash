@@ -31,13 +31,13 @@ function CheckTable(props: { tableData: any }) {
       ),
       cell: (info: any) => (
         <div className="flex items-center">
-          <Checkbox
+          {/* <Checkbox
             defaultChecked={info.getValue()[1]}
             colorScheme="brandScheme"
             me="10px"
-          />
+          /> */}
           <p className="ml-3 text-sm font-bold text-navy-700 dark:text-white">
-            {info.getValue()[0]}
+            {/* {info.getValue()[0]} */}
           </p>
         </div>
       ),
